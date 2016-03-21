@@ -303,6 +303,7 @@ WebInspector.ExperimentsSettings = function(experimentsEnabled)
     this.timelinePowerProfiler = this._createExperiment("timelinePowerProfiler", "Timeline power profiler");
     this.timelineJSCPUProfile = this._createExperiment("timelineJSCPUProfile", "Timeline with JS sampling");
 
+    this.setEnabled("layersPanel", true);
     this._cleanUpSetting();
 }
 

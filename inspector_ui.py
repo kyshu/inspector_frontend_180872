@@ -59,7 +59,7 @@ class Application:
                 time.sleep(1)
 
             print "ready to open url"
-            Popen(["google-chrome", "http://localhost:8000/front_end/inspector.html?ws=localhost:9001" + page.getDebugFrontendUrl()])
+            Popen(["google-chrome", "http://localhost:8000/front_end/inspector.html?ws=localhost:9001" + page.getDebugFrontendUrl() + "&experiments=true"])
 
         self._pageRow = PageRow(onRemoteBrowserChanged, onBeginInspect)
         self._vBox.pack_start(self._pageRow.container())
