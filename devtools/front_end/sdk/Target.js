@@ -168,6 +168,9 @@ WebInspector.Target.prototype = {
         /** @type {!WebInspector.HeapProfilerModel} */
         this.heapProfilerModel = new WebInspector.HeapProfilerModel(this);
 
+        /** @type {!WebInspector.LayerTreeModel} */
+        this.layerTreeModel = new WebInspector.LayerTreeModel(this);
+
         if (callback)
             callback(this);
     },
