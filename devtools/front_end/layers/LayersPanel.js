@@ -101,6 +101,7 @@ WebInspector.LayersPanel.prototype = {
         this._target = target;
         this._target.layerTreeModel.addEventListener(WebInspector.LayerTreeModel.Events.LayerTreeChanged, this._onLayerTreeUpdated, this);
         this._target.layerTreeModel.addEventListener(WebInspector.LayerTreeModel.Events.LayerPainted, this._onLayerPainted, this);
+        this._target.resourceTreeModel.addEventListener(WebInspector.ResourceTreeModel.EventTypes.ViewportChanged, this._viewportChanged, this);
         if (this.isShowing())
             this._target.layerTreeModel.enable();
     },
@@ -221,6 +222,13 @@ WebInspector.LayersPanel.prototype = {
             this._target.domModel.hideDOMNodeHighlight();
         this._layerTreeOutline.hoverLayer(layer);
         this._layers3DView.hoverObject(activeObject);
+    },
+
+    _viewportChanged: function(event)
+    {
+        var viewport = /** @type {?PageAgent.Viewport} */ (event.data);
+        if (this._layers3DView)
+            this._layers3DView.setViewportSize(viewport)
     },
 
     __proto__: WebInspector.PanelWithSidebarTree.prototype

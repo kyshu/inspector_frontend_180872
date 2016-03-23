@@ -180,6 +180,15 @@ WebInspector.Layers3DView.prototype = {
     },
 
     /**
+     * @param {!PageAgent.Viewport} event
+     */
+    setViewportSize: function(viewport)
+    {
+        if (this._layerTree)
+            this._layerTree.setViewportSize(viewport)
+    },
+
+    /**
      * @param {!WebInspector.Layers3DView.OutlineType} type
      * @param {?WebInspector.Layers3DView.ActiveObject} activeObject
      */
@@ -461,7 +470,10 @@ WebInspector.Layers3DView.prototype = {
         var rect = new WebInspector.Layers3DView.Rectangle(null);
         var viewport = this._layerTree.viewportSize();
         var depth = (this._maxDepth + 1) * WebInspector.Layers3DView.LayerSpacing;
-        var vertices = [0, 0, depth, viewport.width, 0, depth, viewport.width, viewport.height, depth, 0, viewport.height, depth];
+        var vertices = [viewport.scrollX, viewport.scrollY, depth,
+            viewport.scrollX + viewport.contentsWidth, viewport.scrollY, depth,
+            viewport.scrollX + viewport.contentsWidth, viewport.scrollY + viewport.contentsHeight, depth,
+            viewport.scrollX, viewport.scrollY + viewport.contentsHeight, depth];
         rect.vertices = vertices;
         rect.borderColor = [0, 0, 0, 1];
         rect.lineWidth = 3;
