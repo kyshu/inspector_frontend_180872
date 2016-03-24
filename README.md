@@ -9,13 +9,13 @@ The tool offers the possibility to develop based on blink-inspector for:
 
 Moreover, the tool offers an additional remote targets/webruntime detector.
 
-### Reqirements:
+### Requirements:
   * python2.x
   * adb
   * chrome browser on host. Alternatively, any web socket supported browsers should be fine
 
 ### Steps
-1. setup evn
+1. setup env
   *  `make`
 2. invoke the tool
   *  `./inspector_ui.py`
