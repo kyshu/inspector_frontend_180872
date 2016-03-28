@@ -32,10 +32,11 @@
  * @constructor
  * @extends {WebInspector.VBox}
  */
-WebInspector.Layers3DView = function()
+WebInspector.Layers3DView = function(layerChangedChecked)
 {
     WebInspector.VBox.call(this);
     this.element.classList.add("layers-3d-view");
+    this._toggleAutoUpdate = layerChangedChecked;
     this._initStatusBar();
     this._emptyView = new WebInspector.EmptyView(WebInspector.UIString("Not in the composited mode.\nConsider forcing composited mode in Settings."));
     this._canvasElement = this.element.createChild("canvas");
@@ -275,8 +276,8 @@ WebInspector.Layers3DView.prototype = {
     {
         var scaleFactorForMargins = 1.2;
         var viewport = this._layerTree.viewportSize();
-        var baseWidth = viewport ? viewport.width : this._layerTree.contentRoot().width();
-        var baseHeight = viewport ? viewport.height : this._layerTree.contentRoot().height();
+        var baseWidth = viewport ? viewport.contentWidth : this._layerTree.contentRoot().width();
+        var baseHeight = viewport ? viewport.contentWidth : this._layerTree.contentRoot().height();
         var canvasWidth = this._canvasElement.width;
         var canvasHeight = this._canvasElement.height;
         var scaleX = canvasWidth / baseWidth / scaleFactorForMargins;
@@ -636,13 +637,16 @@ WebInspector.Layers3DView.prototype = {
      * @param {!Element} statusBarElement
      * @return {!WebInspector.Setting}
      */
-    _createVisibilitySetting: function(caption, name, value, statusBarElement)
+    _createVisibilitySetting: function(caption, name, value, statusBarElement, changeListener)
     {
         var checkbox = new WebInspector.StatusBarCheckbox(WebInspector.UIString(caption))
         statusBarElement.appendChild(checkbox.element);
         var setting = WebInspector.settings.createSetting(name, value)
         WebInspector.SettingsUI.bindCheckbox(checkbox.inputElement, setting);
-        setting.addChangeListener(this._update, this);
+        if (!changeListener)
+            setting.addChangeListener(this._update, this);
+        else
+            setting.addChangeListener(changeListener, this);
         return setting;
     },
 
@@ -652,6 +656,7 @@ WebInspector.Layers3DView.prototype = {
         this._showViewportSetting = this._createVisibilitySetting("Viewport", "showViewport", true, this._panelStatusBarElement);
         this._showSlowScrollRectsSetting = this._createVisibilitySetting("Slow scroll rects", "showSlowScrollRects", true, this._panelStatusBarElement);
         this._showPaintsSetting = this._createVisibilitySetting("Paints", "showPaints", true, this._panelStatusBarElement);
+        this.autoUpdatedSetting = this._createVisibilitySetting("Auto Update", "updateWithTransformed", true, this._panelStatusBarElement, this._toggleAutoUpdate);
     },
 
     /**

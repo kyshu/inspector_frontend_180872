@@ -53,7 +53,7 @@ WebInspector.LayersPanel = function()
     this._rightSplitView = new WebInspector.SplitView(false, true, "layerDetailsSplitViewState");
     this._rightSplitView.show(this.mainElement());
 
-    this._layers3DView = new WebInspector.Layers3DView();
+    this._layers3DView = new WebInspector.Layers3DView(this._autoUpdateLayerTreeChecked.bind(this));
     this._layers3DView.show(this._rightSplitView.mainElement());
     this._layers3DView.addEventListener(WebInspector.Layers3DView.Events.ObjectSelected, this._onObjectSelected, this);
     this._layers3DView.addEventListener(WebInspector.Layers3DView.Events.ObjectHovered, this._onObjectHovered, this);
@@ -99,8 +99,7 @@ WebInspector.LayersPanel.prototype = {
         if (this._target)
             return;
         this._target = target;
-        this._target.layerTreeModel.addEventListener(WebInspector.LayerTreeModel.Events.LayerTreeChanged, this._onLayerTreeUpdated, this);
-        this._target.layerTreeModel.addEventListener(WebInspector.LayerTreeModel.Events.LayerPainted, this._onLayerPainted, this);
+        this._autoUpdateLayerTreeChecked();
         this._target.resourceTreeModel.addEventListener(WebInspector.ResourceTreeModel.EventTypes.ViewportChanged, this._viewportChanged, this);
         if (this.isShowing())
             this._target.layerTreeModel.enable();
@@ -145,6 +144,19 @@ WebInspector.LayersPanel.prototype = {
         if (this._currentlyHoveredLayer && (!layerTree || !layerTree.layerById(this._currentlyHoveredLayer.layer.id())))
             this._hoverObject(null);
         this._layerDetailsView.update();
+    },
+
+    _autoUpdateLayerTreeChecked: function()
+    {
+        if (this._target) {
+            if (this._layers3DView.autoUpdatedSetting.get()) {
+                this._target.layerTreeModel.addEventListener(WebInspector.LayerTreeModel.Events.LayerTreeChanged, this._onLayerTreeUpdated, this);
+                this._target.layerTreeModel.addEventListener(WebInspector.LayerTreeModel.Events.LayerPainted, this._onLayerPainted, this);
+            } else {
+                this._target.layerTreeModel.removeEventListener(WebInspector.LayerTreeModel.Events.LayerTreeChanged, this._onLayerTreeUpdated, this);
+                this._target.layerTreeModel.removeEventListener(WebInspector.LayerTreeModel.Events.LayerPainted, this._onLayerPainted, this);
+            }
+        }
     },
 
     /**
