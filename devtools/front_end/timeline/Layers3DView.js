@@ -54,6 +54,7 @@ WebInspector.Layers3DView = function(layerChangedChecked)
     this._scrollRectQuadsForLayer = {};
     this._isVisible = {};
     this._layerTree = null;
+    this._layerTexture = {};
     this._textureManager = new WebInspector.LayerTextureManager();
     this._textureManager.addEventListener(WebInspector.LayerTextureManager.Events.TextureUpdated, this._update, this);
 
@@ -164,7 +165,7 @@ WebInspector.Layers3DView.prototype = {
          */
         function onTextureCreated(texture)
         {
-            this._layerTexture = {layerId: layer.id(), texture: texture};
+            this._layerTexture[layer.id()] = texture;
             this._update();
         }
     },
@@ -426,8 +427,11 @@ WebInspector.Layers3DView.prototype = {
             var rect = new WebInspector.Layers3DView.Rectangle(activeObject);
             rect.calculateVerticesFromRect(layer, scrollRects[i].rect, this._calculateScrollRectDepth(layer, i));
             var isSelected = this._isObjectActive(WebInspector.Layers3DView.OutlineType.Selected, layer, i);
-            var color = isSelected ? WebInspector.Layers3DView.SelectedScrollRectBackgroundColor : WebInspector.Layers3DView.ScrollRectBackgroundColor;
-            rect.fillColor = color;
+            var hasTexture = (layer.id() in this._layerTexture);
+            if (!hasTexture) {
+                var color = isSelected ? WebInspector.Layers3DView.SelectedScrollRectBackgroundColor : WebInspector.Layers3DView.ScrollRectBackgroundColor;
+                rect.fillColor = color;
+            }
             rect.borderColor = WebInspector.Layers3DView.ScrollRectBorderColor;
             this._rects.push(rect);
         }
@@ -438,13 +442,12 @@ WebInspector.Layers3DView.prototype = {
      */
     _calculateLayerImageRect: function(layer)
     {
-        var layerTexture = this._layerTexture;
-        if (layer.id() !== layerTexture.layerId)
+        if (!(layer.id() in this._layerTexture))
             return;
         var activeObject = WebInspector.Layers3DView.ActiveObject.createLayerActiveObject(layer);
         var rect = new WebInspector.Layers3DView.Rectangle(activeObject);
         rect.setVertices(layer.quad(), this._depthForLayer(layer));
-        rect.texture = layerTexture.texture;
+        rect.texture = this._layerTexture[layer.id()];
         this._rects.push(rect);
     },
 
@@ -491,10 +494,8 @@ WebInspector.Layers3DView.prototype = {
             this._layerTree.forEachLayer(this._calculateLayerScrollRects.bind(this));
 
         if (this._showPaintsSetting.get()) {
-            if (this._layerTexture)
-                this._layerTree.forEachLayer(this._calculateLayerImageRect.bind(this));
-            else
-                this._layerTree.forEachLayer(this._calculateLayerTileRects.bind(this));
+            this._layerTree.forEachLayer(this._calculateLayerImageRect.bind(this));
+            //this._layerTree.forEachLayer(this._calculateLayerTileRects.bind(this));
         }
 
         if (this._layerTree.viewportSize() && this._showViewportSetting.get())
