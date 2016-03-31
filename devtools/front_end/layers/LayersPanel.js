@@ -148,7 +148,7 @@ WebInspector.LayersPanel.prototype = {
 
     _autoUpdateLayerTreeChecked: function()
     {
-        if (this._target) {
+        if (this._target && this._layers3DView) {
             if (this._layers3DView.autoUpdatedSetting.get()) {
                 this._target.layerTreeModel.addEventListener(WebInspector.LayerTreeModel.Events.LayerTreeChanged, this._onLayerTreeUpdated, this);
                 this._target.layerTreeModel.addEventListener(WebInspector.LayerTreeModel.Events.LayerPainted, this._onLayerPainted, this);
