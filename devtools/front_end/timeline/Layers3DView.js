@@ -129,7 +129,7 @@ WebInspector.Layers3DView.ScrollRectBorderColor = [178, 0, 0, 1];
 WebInspector.Layers3DView.BorderWidth = 1;
 WebInspector.Layers3DView.SelectedBorderWidth = 2;
 
-WebInspector.Layers3DView.LayerSpacing = 20;
+WebInspector.Layers3DView.LayerSpacing = 50;
 WebInspector.Layers3DView.ScrollRectSpacing = 4;
 
 WebInspector.Layers3DView.prototype = {
@@ -144,7 +144,7 @@ WebInspector.Layers3DView.prototype = {
     },
 
     /**
-     * @param {?Array.<!WebInspector.Layers3DView.PaintTile>} tiles
+     * @param {!Array.<!LayerTreeAgent.TileInfo>=} tiles
      */
     setTiles: function(tiles)
     {
@@ -425,7 +425,7 @@ WebInspector.Layers3DView.prototype = {
         for (var i = 0; i < scrollRects.length; ++i) {
             var activeObject = WebInspector.Layers3DView.ActiveObject.createScrollRectActiveObject(layer, i);
             var rect = new WebInspector.Layers3DView.Rectangle(activeObject);
-            rect.calculateVerticesFromRect(layer, scrollRects[i].rect, this._calculateScrollRectDepth(layer, i));
+            rect.calculateVerticesFromRectForLayer(layer, scrollRects[i].rect, this._calculateScrollRectDepth(layer, i));
             var isSelected = this._isObjectActive(WebInspector.Layers3DView.OutlineType.Selected, layer, i);
             var hasTexture = (layer.id() in this._layerTexture);
             if (!hasTexture) {
@@ -459,12 +459,17 @@ WebInspector.Layers3DView.prototype = {
         var tiles = this._textureManager.tilesForLayer(layer.id());
         for (var i = 0; i < tiles.length; ++i) {
             var tile = tiles[i];
-            if (!tile.texture)
-                continue;
+            //if (!tile.texture)
+            //    continue;
             var activeObject = WebInspector.Layers3DView.ActiveObject.createTileActiveObject(layer, tile.traceEvent);
             var rect = new WebInspector.Layers3DView.Rectangle(activeObject);
-            rect.calculateVerticesFromRect(layer, {x: tile.rect[0], y: tile.rect[1], width: tile.rect[2], height: tile.rect[3]}, this._depthForLayer(layer) + 1);
-            rect.texture = tile.texture;
+            rect.calculateVerticesFromRectForTile({x: tile.rect.x, y: tile.rect.y, width: tile.rect.width, height: tile.rect.height}, this._depthForLayer(layer) + 1);
+            //rect.texture = tile.texture;
+            if (tile.allocated)
+                rect.fillColor = [0, 63, 0, 0.5];
+            else
+                rect.fillColor = [150, 0, 74, 1];
+            rect.borderColor = [0, 0, 255, 1];
             this._rects.push(rect);
         }
     },
@@ -489,14 +494,13 @@ WebInspector.Layers3DView.prototype = {
         this._rects = [];
 
         this._layerTree.forEachLayer(this._calculateLayerRect.bind(this));
+        this._layerTree.forEachLayer(this._calculateLayerTileRects.bind(this));
 
         if (this._showSlowScrollRectsSetting.get())
             this._layerTree.forEachLayer(this._calculateLayerScrollRects.bind(this));
 
-        if (this._showPaintsSetting.get()) {
+        if (this._showPaintsSetting.get())
             this._layerTree.forEachLayer(this._calculateLayerImageRect.bind(this));
-            //this._layerTree.forEachLayer(this._calculateLayerTileRects.bind(this));
-        }
 
         if (this._layerTree.viewportSize() && this._showViewportSetting.get())
             this._calculateViewportRect();
@@ -714,9 +718,9 @@ WebInspector.Layers3DView.prototype = {
     {
         var object = this._activeObjectFromEventPoint(event);
         if (object) {
-            if (object.type() == WebInspector.Layers3DView.ActiveObject.Type.Tile)
-                this.dispatchEventToListeners(WebInspector.Layers3DView.Events.JumpToPaintEventRequested, object.traceEvent);
-            else if (object.layer)
+            //if (object.type() == WebInspector.Layers3DView.ActiveObject.Type.Tile)
+            //    this.dispatchEventToListeners(WebInspector.Layers3DView.Events.JumpToPaintEventRequested, object.traceEvent);
+            if (object.layer)
                 this.dispatchEventToListeners(WebInspector.Layers3DView.Events.LayerSnapshotRequested, object.layer);
         }
         event.stopPropagation();
@@ -758,7 +762,7 @@ WebInspector.LayerTextureManager.prototype = {
     },
 
     /**
-     * @param {?Array.<!WebInspector.Layers3DView.PaintTile>} paintTiles
+     * @param {!Array.<!LayerTreeAgent.TileInfo>=} paintTiles
      */
     setTiles: function(paintTiles)
     {
@@ -772,7 +776,7 @@ WebInspector.LayerTextureManager.prototype = {
                 tilesForLayer = [];
                 this._tilesByLayerId[layerId] = tilesForLayer;
             }
-            var tile = new WebInspector.LayerTextureManager.Tile(paintTiles[i].snapshot, paintTiles[i].rect, paintTiles[i].traceEvent);
+            var tile = new WebInspector.LayerTextureManager.Tile(paintTiles[i].rect, paintTiles[i].scale, paintTiles[i].memoryAllocated, paintTiles[i].layerId);
             tilesForLayer.push(tile);
             if (this._scale && this._gl)
                 this._updateTile(tile);
@@ -820,28 +824,28 @@ WebInspector.LayerTextureManager.prototype = {
      */
     _updateTile: function(tile)
     {
-        console.assert(this._scale && this._gl);
-        tile.scale = this._scale;
-        tile.snapshot.requestImage(null, null, tile.scale, onGotImage.bind(this));
+        //console.assert(this._scale && this._gl);
+        //tile.scale = this._scale;
+        //tile.snapshot.requestImage(null, null, tile.scale, onGotImage.bind(this));
 
-        /**
-         * @this {WebInspector.LayerTextureManager}
-         * @param {string=} imageURL
-         */
-        function onGotImage(imageURL)
-        {
-            this.createTexture(onTextureCreated.bind(this), imageURL);
-        }
+        ///**
+        // * @this {WebInspector.LayerTextureManager}
+        // * @param {string=} imageURL
+        // */
+        //function onGotImage(imageURL)
+        //{
+        //    this.createTexture(onTextureCreated.bind(this), imageURL);
+        //}
 
-        /**
-         * @this {WebInspector.LayerTextureManager}
-         * @param {!WebGLTexture} texture
-         */
-        function onTextureCreated(texture)
-        {
-            tile.texture = texture;
-            this.dispatchEventToListeners(WebInspector.LayerTextureManager.Events.TextureUpdated);
-        }
+        ///**
+        // * @this {WebInspector.LayerTextureManager}
+        // * @param {!WebGLTexture} texture
+        // */
+        //function onTextureCreated(texture)
+        //{
+        //    tile.texture = texture;
+        //    this.dispatchEventToListeners(WebInspector.LayerTextureManager.Events.TextureUpdated);
+        //}
     },
 
     /**
@@ -942,11 +946,24 @@ WebInspector.Layers3DView.Rectangle.prototype = {
     },
 
     /**
+     * @param {!DOMAgent.Rect} rect
+     * @param {number} z
+     */
+    calculateVerticesFromRectForTile: function(rect, z)
+    {
+        var x1 = rect.x;
+        var y1 = rect.y;
+        var x2 = rect.x + rect.width;
+        var y2 = rect.y + rect.height;
+        this.setVertices([x1, y1, x2, y1, x2, y2, x1, y2], z);
+    },
+
+    /**
      * @param {!WebInspector.Layer} layer
      * @param {!DOMAgent.Rect} rect
      * @param {number} z
      */
-    calculateVerticesFromRect: function(layer, rect, z)
+    calculateVerticesFromRectForLayer: function(layer, rect, z)
     {
         var quad = layer.quad();
         var rx1 = rect.x / layer.width();
@@ -1049,7 +1066,7 @@ WebInspector.Layers3DView.ActiveObject.createTileActiveObject = function(layer, 
     var activeObject = new WebInspector.Layers3DView.ActiveObject();
     activeObject._type = WebInspector.Layers3DView.ActiveObject.Type.Tile;
     activeObject.layer = layer;
-    activeObject.traceEvent = traceEvent;
+    //activeObject.traceEvent = traceEvent;
     return activeObject;
 }
 
@@ -1065,16 +1082,30 @@ WebInspector.Layers3DView.ActiveObject.prototype = {
 
 /**
  * @constructor
- * @param {!WebInspector.PaintProfilerSnapshot} snapshot
- * @param {!Array.<number>} rect
- * @param {!WebInspector.TracingModel.Event} traceEvent
+ * @param {!DOMAgent.Rect} rect
+ * @param {number} scale
+ * @param {boolean} allocated
+ * @param {string} layerId
  */
-WebInspector.LayerTextureManager.Tile = function(snapshot, rect, traceEvent)
+WebInspector.LayerTextureManager.Tile = function(rect, scale, allocated, layerId)
 {
-    this.snapshot = snapshot;
-    this.rect = rect;
-    this.traceEvent = traceEvent;
-    this.scale = 0;
-    /** @type {?WebGLTexture} */
-    this.texture = null;
+    this.rect = {x: rect.x / scale, y: rect.y / scale, width: rect.width / scale, height: rect.height / scale};
+    this.allocated = allocated;
+    this.layerId = layerId;
 }
+
+///**
+// * @constructor
+// * @param {!WebInspector.PaintProfilerSnapshot} snapshot
+// * @param {!Array.<number>} rect
+// * @param {!WebInspector.TracingModel.Event} traceEvent
+// */
+//WebInspector.LayerTextureManager.Tile = function(snapshot, rect, traceEvent)
+//{
+//    this.snapshot = snapshot;
+//    this.rect = rect;
+//    this.traceEvent = traceEvent;
+//    this.scale = 0;
+//    /** @type {?WebGLTexture} */
+//    this.texture = null;
+//}

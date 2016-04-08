@@ -114,6 +114,7 @@ WebInspector.LayersPanel.prototype = {
             return;
         this._target.layerTreeModel.removeEventListener(WebInspector.LayerTreeModel.Events.LayerTreeChanged, this._onLayerTreeUpdated, this);
         this._target.layerTreeModel.removeEventListener(WebInspector.LayerTreeModel.Events.LayerPainted, this._onLayerPainted, this);
+        this._target.layerTreeModel.removeEventListener(WebInspector.LayerTreeModel.Events.TileAllocated, this._onTileAllocated, this);
         this._target.layerTreeModel.disable();
         this._target = null;
     },
@@ -150,9 +151,11 @@ WebInspector.LayersPanel.prototype = {
     {
         if (this._target && this._layers3DView) {
             if (this._layers3DView.autoUpdatedSetting.get()) {
+                this._target.layerTreeModel.addEventListener(WebInspector.LayerTreeModel.Events.TileAllocated, this._onTileAllocated, this);
                 this._target.layerTreeModel.addEventListener(WebInspector.LayerTreeModel.Events.LayerTreeChanged, this._onLayerTreeUpdated, this);
                 this._target.layerTreeModel.addEventListener(WebInspector.LayerTreeModel.Events.LayerPainted, this._onLayerPainted, this);
             } else {
+                this._target.layerTreeModel.removeEventListener(WebInspector.LayerTreeModel.Events.TileAllocated, this._onTileAllocated, this);
                 this._target.layerTreeModel.removeEventListener(WebInspector.LayerTreeModel.Events.LayerTreeChanged, this._onLayerTreeUpdated, this);
                 this._target.layerTreeModel.removeEventListener(WebInspector.LayerTreeModel.Events.LayerPainted, this._onLayerPainted, this);
             }
@@ -169,6 +172,15 @@ WebInspector.LayersPanel.prototype = {
         this._layers3DView.setLayerTree(this._target.layerTreeModel.layerTree());
         if (this._currentlySelectedLayer && this._currentlySelectedLayer.layer === event.data)
             this._layerDetailsView.update();
+    },
+
+    /**
+     * @param {!WebInspector.Event} event
+     */
+    _onTileAllocated: function(event)
+    {
+        tiles = event.data;
+        this._layers3DView.setTiles(tiles);
     },
 
     /**

@@ -58,6 +58,7 @@ WebInspector.LayerTreeModel = function(target)
 WebInspector.LayerTreeModel.Events = {
     LayerTreeChanged: "LayerTreeChanged",
     LayerPainted: "LayerPainted",
+    TileAllocated: "TileAllocated",
 }
 
 WebInspector.LayerTreeModel.ScrollRectType = {
@@ -74,6 +75,7 @@ WebInspector.LayerTreeModel.prototype = {
             return;
         this._enabled = false;
         this._layerTree = null;
+        this._tiles = null;
         this.target().layerTreeAgent().disable();
     },
 
@@ -83,6 +85,7 @@ WebInspector.LayerTreeModel.prototype = {
             return;
         this._enabled = true;
         this._layerTree = new WebInspector.AgentLayerTree(this.target());
+        this._tiles = null;
         this._lastPaintRectByLayerId = {};
         this.target().layerTreeAgent().enable();
     },
@@ -156,6 +159,17 @@ WebInspector.LayerTreeModel.prototype = {
             return;
         this.disable();
         this.enable();
+    },
+
+    /**
+     * @param {!Array.<!LayerTreeAgent.TileInfo>=} tiles
+     */
+    _tileMemoryAllocated: function(tiles)
+    {
+        if (!this._enabled)
+            return;
+        this._tiles = tiles;
+        this.dispatchEventToListeners(WebInspector.LayerTreeModel.Events.TileAllocated, tiles);
     },
 
     __proto__: WebInspector.SDKModel.prototype
@@ -1202,5 +1216,13 @@ WebInspector.LayerTreeDispatcher.prototype = {
     layerPainted: function(layerId, clipRect)
     {
         this._layerTreeModel._layerPainted(layerId, clipRect);
+    },
+
+    /**
+     * @param {!Array.<!LayerTreeAgent.TileInfo>=} tiles
+     */
+    tileMemoryAllocated: function(tiles)
+    {
+        this._layerTreeModel._tileMemoryAllocated(tiles);
     }
 }
