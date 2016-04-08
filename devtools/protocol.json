@@ -4077,6 +4077,19 @@
                     "type": "number",
                     "description": "A time in seconds since the end of previous step (for the first step, time since painting started)"
                 }
+            },
+            {
+                "id": "TileInfo",
+                "type": "object",
+                "description": "Tiles",
+                "properties": [
+                    { "name": "id", "type": "integer", "description": "Tile's id" },
+                    { "name": "layerId", "$ref": "LayerId", "description": "Layer's id that tile belongs to" },
+                    { "name": "rasterMode", "type": "string", "description": "Tile raster mode" },
+                    { "name": "memoryAllocated", "type": "boolean", "description": "True if tile's memory get allocated" },
+                    { "name": "scale", "type": "number", "description": "Raster scale of tile" },
+                    { "name": "rect", "$ref": "DOM.Rect", "description": "Tile's Rect" }
+                ]
             }
         ],
         "commands": [
@@ -4172,6 +4185,12 @@
                 "parameters": [
                     { "name": "layerId", "$ref": "LayerId", "description": "The id of the painted layer." },
                     { "name": "clip", "$ref": "DOM.Rect", "description": "Clip rectangle." }
+                ]
+            },
+            {
+                "name": "tileMemoryAllocated",
+                "parameters": [
+                    { "name": "tileInfo", "type": "array", "items": { "$ref": "TileInfo" }, "description": "Tiles distribution" }
                 ]
             }
         ]
