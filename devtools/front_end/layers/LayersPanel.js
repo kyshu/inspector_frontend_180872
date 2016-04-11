@@ -44,11 +44,12 @@ WebInspector.LayersPanel = function()
 
     WebInspector.targetManager.observeTargets(this);
     this._currentlySelectedLayer = null;
+    this._currentlySelectedTile = null;
     this._currentlyHoveredLayer = null;
 
     this._layerTreeOutline = new WebInspector.LayerTreeOutline(this.sidebarTree);
-    this._layerTreeOutline.addEventListener(WebInspector.LayerTreeOutline.Events.LayerSelected, this._onObjectSelected, this);
-    this._layerTreeOutline.addEventListener(WebInspector.LayerTreeOutline.Events.LayerHovered, this._onObjectHovered, this);
+    //this._layerTreeOutline.addEventListener(WebInspector.LayerTreeOutline.Events.LayerSelected, this._onObjectSelected, this);
+    //this._layerTreeOutline.addEventListener(WebInspector.LayerTreeOutline.Events.LayerHovered, this._onObjectHovered, this);
 
     this._rightSplitView = new WebInspector.SplitView(false, true, "layerDetailsSplitViewState");
     this._rightSplitView.show(this.mainElement());
@@ -114,6 +115,7 @@ WebInspector.LayersPanel.prototype = {
             return;
         this._target.layerTreeModel.removeEventListener(WebInspector.LayerTreeModel.Events.LayerTreeChanged, this._onLayerTreeUpdated, this);
         this._target.layerTreeModel.removeEventListener(WebInspector.LayerTreeModel.Events.LayerPainted, this._onLayerPainted, this);
+        this._target.layerTreeModel.removeEventListener(WebInspector.LayerTreeModel.Events.TileAllocated, this._onTileAllocated, this);
         this._target.layerTreeModel.disable();
         this._target = null;
     },
@@ -150,9 +152,11 @@ WebInspector.LayersPanel.prototype = {
     {
         if (this._target && this._layers3DView) {
             if (this._layers3DView.autoUpdatedSetting.get()) {
+                this._target.layerTreeModel.addEventListener(WebInspector.LayerTreeModel.Events.TileAllocated, this._onTileAllocated, this);
                 this._target.layerTreeModel.addEventListener(WebInspector.LayerTreeModel.Events.LayerTreeChanged, this._onLayerTreeUpdated, this);
                 this._target.layerTreeModel.addEventListener(WebInspector.LayerTreeModel.Events.LayerPainted, this._onLayerPainted, this);
             } else {
+                this._target.layerTreeModel.removeEventListener(WebInspector.LayerTreeModel.Events.TileAllocated, this._onTileAllocated, this);
                 this._target.layerTreeModel.removeEventListener(WebInspector.LayerTreeModel.Events.LayerTreeChanged, this._onLayerTreeUpdated, this);
                 this._target.layerTreeModel.removeEventListener(WebInspector.LayerTreeModel.Events.LayerPainted, this._onLayerPainted, this);
             }
@@ -169,6 +173,15 @@ WebInspector.LayersPanel.prototype = {
         this._layers3DView.setLayerTree(this._target.layerTreeModel.layerTree());
         if (this._currentlySelectedLayer && this._currentlySelectedLayer.layer === event.data)
             this._layerDetailsView.update();
+    },
+
+    /**
+     * @param {!WebInspector.Event} event
+     */
+    _onTileAllocated: function(event)
+    {
+        tiles = event.data;
+        this._layers3DView.setTiles(tiles);
     },
 
     /**
@@ -204,18 +217,26 @@ WebInspector.LayersPanel.prototype = {
      */
     _selectObject: function(activeObject)
     {
-        var layer = activeObject && activeObject.layer;
-        if (this._currentlySelectedLayer === activeObject)
-            return;
-        this._currentlySelectedLayer = activeObject;
-        var node = layer ? layer.nodeForSelfOrAncestor() : null;
-        if (node)
-            node.highlightForTwoSeconds();
-        else if (this._target)
-            this._target.domModel.hideDOMNodeHighlight();
-        this._layerTreeOutline.selectLayer(layer);
-        this._layers3DView.selectObject(activeObject);
-        this._layerDetailsView.setObject(activeObject);
+        if (activeObject && activeObject.layer) {
+            var layer = activeObject.layer;
+            if (this._currentlySelectedLayer === activeObject)
+                return;
+            this._currentlySelectedLayer = activeObject;
+            var node = layer ? layer.nodeForSelfOrAncestor() : null;
+            if (node)
+                node.highlightForTwoSeconds();
+            else if (this._target)
+                this._target.domModel.hideDOMNodeHighlight();
+            this._layerTreeOutline.selectLayer(layer);
+            this._layers3DView.selectObject(activeObject);
+            this._layerDetailsView.setObject(activeObject);
+        } else if (activeObject && activeObject.tile) {
+            if (this._currentlySelectedTile === activeObject)
+                return;
+            this._currentlySelectedTile = activeObject;
+            this._layers3DView.selectObject(activeObject);
+            this._layerDetailsView.setObject(activeObject);
+        }
     },
 
     /**
