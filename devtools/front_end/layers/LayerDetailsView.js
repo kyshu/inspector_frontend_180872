@@ -48,6 +48,15 @@ WebInspector.LayerDetailsView.Events = {
 }
 
 /**
+ * @enum {string}
+ */
+WebInspector.LayerDetailsView.Type = {
+    Layer: "Layer",
+    Tile: "Tile",
+    All: "All"
+}
+
+/**
  * @type {!Object.<string, string>}
  */
 WebInspector.LayerDetailsView.CompositingReasonDetail = {
@@ -92,16 +101,30 @@ WebInspector.LayerDetailsView.prototype = {
      */
     setObject: function(activeObject)
     {
-        this._layer = activeObject ? activeObject.layer : null;
-        this._scrollRectIndex = activeObject ? activeObject.scrollRectIndex : null;
-        if (this.isShowing())
-            this.update();
+        if (!activeObject) {
+            this._layer = null;
+            this._tile = null;
+            if (this.isShowing())
+                this.update(WebInspector.LayerDetailsView.Type.Layer);
+            return;
+        }
+
+        if (activeObject.type() == WebInspector.Layers3DView.ActiveObject.Type.Layer) {
+            this._layer = activeObject.layer;
+            this._scrollRectIndex = activeObject ? activeObject.scrollRectIndex : null;
+            if (this.isShowing())
+                this.update(WebInspector.LayerDetailsView.Type.Layer);
+        } else if (activeObject.type() == WebInspector.Layers3DView.ActiveObject.Type.Tile) {
+            this._tile = activeObject.tile;
+            if (this.isShowing())
+                this.update(WebInspector.LayerDetailsView.Type.Tile);
+        }
     },
 
     wasShown: function()
     {
         WebInspector.View.prototype.wasShown.call(this);
-        this.update();
+        this.update(WebInspector.LayerDetailsView.Type.Layer);
     },
 
     /**
@@ -130,43 +153,73 @@ WebInspector.LayerDetailsView.prototype = {
         element.addEventListener("click", this._onScrollRectClicked.bind(this, index), false);
     },
 
-    update: function()
+    update: function(type)
     {
-        if (!this._layer) {
-            this._tableElement.remove();
-            this._emptyView.show(this.element);
-            return;
+        if (type === WebInspector.LayerDetailsView.Type.All || type === WebInspector.LayerDetailsView.Type.Layer) {
+            if (!this._layer) {
+                this._layerTableElement.remove();
+                this._emptyView.show(this.element);
+            }
+            if (this._layer) {
+                this._tileTableElement.remove();
+                this._emptyView.detach();
+                this.element.appendChild(this._layerTableElement);
+                this._layerPositionCell.textContent = WebInspector.UIString("%d,%d", this._layer.offsetX(), this._layer.offsetY());
+                this._layerSizeCell.textContent = WebInspector.UIString("%d × %d", this._layer.width(), this._layer.height());
+                this._paintCountCell.textContent = this._layer.paintCount();
+                const bytesPerPixel = 4;
+                this._memoryEstimateCell.textContent = Number.bytesToString(this._layer.invisible() ? 0 : this._layer.width() * this._layer.height() * bytesPerPixel);
+                this._layer.requestCompositingReasons(this._updateCompositingReasons.bind(this));
+                this._scrollRectsCell.removeChildren();
+                this._layer.scrollRects().forEach(this._createScrollRectElement.bind(this));
+            }
         }
-        this._emptyView.detach();
-        this.element.appendChild(this._tableElement);
-        this._positionCell.textContent = WebInspector.UIString("%d,%d", this._layer.offsetX(), this._layer.offsetY());
-        this._sizeCell.textContent = WebInspector.UIString("%d × %d", this._layer.width(), this._layer.height());
-        this._paintCountCell.textContent = this._layer.paintCount();
-        const bytesPerPixel = 4;
-        this._memoryEstimateCell.textContent = Number.bytesToString(this._layer.invisible() ? 0 : this._layer.width() * this._layer.height() * bytesPerPixel);
-        this._layer.requestCompositingReasons(this._updateCompositingReasons.bind(this));
-        this._scrollRectsCell.removeChildren();
-        this._layer.scrollRects().forEach(this._createScrollRectElement.bind(this));
+
+        if (type === WebInspector.LayerDetailsView.Type.All || type === WebInspector.LayerDetailsView.Type.Tile) {
+            if (!this._tile) {
+                this._tileTableElement.remove();
+                this._emptyView.show(this.element);
+            }
+            if (this._tile) {
+                this._layerTableElement.remove();
+                this._emptyView.detach();
+                this.element.appendChild(this._tileTableElement);
+                this._idCell.textContent = WebInspector.UIString("%s", this._tile.id);
+                this._tilePositionCell.textContent = WebInspector.UIString("%d,%d", this._tile.rect.x, this._tile.y);
+                this._tileSizeCell.textContent = WebInspector.UIString("%d × %d", this._tile.rect.width, this._tile.rect.height);
+                this._rasterModeCell.textContent = WebInspector.UIString("%s", this._tile.rasterMode);
+                this._scaleCell.textContent = WebInspector.UIString("%d", this._tile.scale);
+            }
+        }
     },
 
     _createTable: function()
     {
-        this._tableElement = this.element.createChild("table");
-        this._tbodyElement = this._tableElement.createChild("tbody");
-        this._positionCell = this._createRow(WebInspector.UIString("Position in parent:"));
-        this._sizeCell = this._createRow(WebInspector.UIString("Size:"));
-        this._compositingReasonsCell = this._createRow(WebInspector.UIString("Compositing Reasons:"));
-        this._memoryEstimateCell = this._createRow(WebInspector.UIString("Memory estimate:"));
-        this._paintCountCell = this._createRow(WebInspector.UIString("Paint count:"));
-        this._scrollRectsCell = this._createRow(WebInspector.UIString("Slow scroll regions:"));
+        this._layerTableElement = this.element.createChild("table");
+        this._tlayerbodyElement = this._layerTableElement.createChild("tbody");
+        this._layerPositionCell = this._createRow(WebInspector.UIString("Position in parent:"), this._tlayerbodyElement);
+        this._layerSizeCell = this._createRow(WebInspector.UIString("Size:"), this._tlayerbodyElement);
+        this._compositingReasonsCell = this._createRow(WebInspector.UIString("Compositing Reasons:"), this._tlayerbodyElement);
+        this._memoryEstimateCell = this._createRow(WebInspector.UIString("Memory estimate:"), this._tlayerbodyElement);
+        this._paintCountCell = this._createRow(WebInspector.UIString("Paint count:"), this._tlayerbodyElement);
+        this._scrollRectsCell = this._createRow(WebInspector.UIString("Slow scroll regions:"), this._tlayerbodyElement);
+
+        // For Tile
+        this._tileTableElement = this.element.createChild("table");
+        this._ttilebodyElement = this._tileTableElement.createChild("tbody");
+        this._idCell = this._createRow(WebInspector.UIString("ID:"), this._ttilebodyElement);
+        this._tilePositionCell = this._createRow(WebInspector.UIString("Position:"), this._ttilebodyElement);
+        this._tileSizeCell = this._createRow(WebInspector.UIString("Size:"), this._ttilebodyElement);
+        this._rasterModeCell = this._createRow(WebInspector.UIString("Raster mode:"), this._ttilebodyElement);
+        this._scaleCell = this._createRow(WebInspector.UIString("Scale:"), this._ttilebodyElement);
     },
 
     /**
      * @param {string} title
      */
-    _createRow: function(title)
+    _createRow: function(title, bodyElement)
     {
-        var tr = this._tbodyElement.createChild("tr");
+        var tr = bodyElement.createChild("tr");
         var titleCell = tr.createChild("td");
         titleCell.textContent = title;
         return tr.createChild("td");

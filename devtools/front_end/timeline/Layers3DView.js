@@ -126,6 +126,7 @@ WebInspector.Layers3DView.BorderColor = [0, 0, 0, 1];
 WebInspector.Layers3DView.ScrollRectBackgroundColor = [178, 0, 0, 0.4];
 WebInspector.Layers3DView.SelectedScrollRectBackgroundColor = [178, 0, 0, 0.6];
 WebInspector.Layers3DView.ScrollRectBorderColor = [178, 0, 0, 1];
+WebInspector.Layers3DView.SelectedTileBorderColor = [255, 255, 0, 1];
 WebInspector.Layers3DView.TileBorderColor = [0, 0, 255, 1];
 WebInspector.Layers3DView.TileWithMemoryAllocated = [0, 63, 0, 0.4];
 WebInspector.Layers3DView.TileWithNoMemoryAllocated = [150, 0, 74, 0.9];
@@ -142,7 +143,7 @@ WebInspector.Layers3DView.prototype = {
     setLayerTree: function(layerTree)
     {
         this._layerTree = layerTree;
-        this._textureManager.reset();
+        //this._textureManager.reset();
         this._update();
     },
 
@@ -364,7 +365,7 @@ WebInspector.Layers3DView.prototype = {
         var activeObject = this._lastActiveObject[state];
         if (!activeObject)
             return false;
-        if (activeObject.type() != type)
+        if ((activeObject.tile && type === WebInspector.Layers3DView.ActiveObject.Type.Layer) || (activeObject.layer && type === WebInspector.Layers3DView.ActiveObject.Type.Tile))
             return false;
 
         if (activeObject.layer)
@@ -385,7 +386,7 @@ WebInspector.Layers3DView.prototype = {
         else
             fillColor = WebInspector.Layers3DView.TileWithNoMemoryAllocated;
         if (this._isObjectActive(WebInspector.Layers3DView.OutlineType.Selected, tile, WebInspector.Layers3DView.ActiveObject.Type.Tile)) {
-            borderColor = WebInspector.Layers3DView.SelectedBorderColor;
+            borderColor = WebInspector.Layers3DView.SelectedTileBorderColor;
             borderWidth = WebInspector.Layers3DView.SelectedBorderWidth;
         } else {
             borderColor = WebInspector.Layers3DView.TileBorderColor;
@@ -816,7 +817,7 @@ WebInspector.LayerTextureManager.prototype = {
                 tilesForLayer = [];
                 this._tilesByLayerId[layerId] = tilesForLayer;
             }
-            var tile = new WebInspector.LayerTextureManager.Tile(paintTiles[i].id, paintTiles[i].rect, paintTiles[i].scale, paintTiles[i].memoryAllocated, paintTiles[i].layerId);
+            var tile = new WebInspector.LayerTextureManager.Tile(paintTiles[i].id, paintTiles[i].rect, paintTiles[i].scale, paintTiles[i].memoryAllocated, paintTiles[i].layerId, paintTiles[i].rasterMode);
             tilesForLayer.push(tile);
             if (this._scale && this._gl)
                 this._updateTile(tile);
@@ -1126,13 +1127,16 @@ WebInspector.Layers3DView.ActiveObject.prototype = {
  * @param {number} scale
  * @param {boolean} allocated
  * @param {string} layerId
+ * @param {string} rasterMode
  */
-WebInspector.LayerTextureManager.Tile = function(id, rect, scale, allocated, layerId)
+WebInspector.LayerTextureManager.Tile = function(id, rect, scale, allocated, layerId, rasterMode)
 {
     this.id = id;
     this.rect = {x: rect.x / scale, y: rect.y / scale, width: rect.width / scale, height: rect.height / scale};
+    this.scale = scale;
     this.allocated = allocated;
     this.layerId = layerId;
+    this.rasterMode = rasterMode;
 }
 
 ///**

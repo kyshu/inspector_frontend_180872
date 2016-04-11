@@ -48,8 +48,8 @@ WebInspector.LayersPanel = function()
     this._currentlyHoveredLayer = null;
 
     this._layerTreeOutline = new WebInspector.LayerTreeOutline(this.sidebarTree);
-    this._layerTreeOutline.addEventListener(WebInspector.LayerTreeOutline.Events.LayerSelected, this._onObjectSelected, this);
-    this._layerTreeOutline.addEventListener(WebInspector.LayerTreeOutline.Events.LayerHovered, this._onObjectHovered, this);
+    //this._layerTreeOutline.addEventListener(WebInspector.LayerTreeOutline.Events.LayerSelected, this._onObjectSelected, this);
+    //this._layerTreeOutline.addEventListener(WebInspector.LayerTreeOutline.Events.LayerHovered, this._onObjectHovered, this);
 
     this._rightSplitView = new WebInspector.SplitView(false, true, "layerDetailsSplitViewState");
     this._rightSplitView.show(this.mainElement());
@@ -217,7 +217,7 @@ WebInspector.LayersPanel.prototype = {
      */
     _selectObject: function(activeObject)
     {
-        if (activeObject && activeObject.type() == WebInspector.Layers3DView.ActiveObject.Type.Layer) {
+        if (activeObject && activeObject.layer) {
             var layer = activeObject.layer;
             if (this._currentlySelectedLayer === activeObject)
                 return;
@@ -230,11 +230,12 @@ WebInspector.LayersPanel.prototype = {
             this._layerTreeOutline.selectLayer(layer);
             this._layers3DView.selectObject(activeObject);
             this._layerDetailsView.setObject(activeObject);
-        } else if (activeObject && activeObject.type() == WebInspector.Layers3DView.ActiveObject.Type.Tile) {
+        } else if (activeObject && activeObject.tile) {
             if (this._currentlySelectedTile === activeObject)
                 return;
             this._currentlySelectedTile = activeObject;
             this._layers3DView.selectObject(activeObject);
+            this._layerDetailsView.setObject(activeObject);
         }
     },
 
