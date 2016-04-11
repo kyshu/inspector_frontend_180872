@@ -44,6 +44,7 @@ WebInspector.LayersPanel = function()
 
     WebInspector.targetManager.observeTargets(this);
     this._currentlySelectedLayer = null;
+    this._currentlySelectedTile = null;
     this._currentlyHoveredLayer = null;
 
     this._layerTreeOutline = new WebInspector.LayerTreeOutline(this.sidebarTree);
@@ -216,18 +217,25 @@ WebInspector.LayersPanel.prototype = {
      */
     _selectObject: function(activeObject)
     {
-        var layer = activeObject && activeObject.layer;
-        if (this._currentlySelectedLayer === activeObject)
-            return;
-        this._currentlySelectedLayer = activeObject;
-        var node = layer ? layer.nodeForSelfOrAncestor() : null;
-        if (node)
-            node.highlightForTwoSeconds();
-        else if (this._target)
-            this._target.domModel.hideDOMNodeHighlight();
-        this._layerTreeOutline.selectLayer(layer);
-        this._layers3DView.selectObject(activeObject);
-        this._layerDetailsView.setObject(activeObject);
+        if (activeObject && activeObject.type() == WebInspector.Layers3DView.ActiveObject.Type.Layer) {
+            var layer = activeObject.layer;
+            if (this._currentlySelectedLayer === activeObject)
+                return;
+            this._currentlySelectedLayer = activeObject;
+            var node = layer ? layer.nodeForSelfOrAncestor() : null;
+            if (node)
+                node.highlightForTwoSeconds();
+            else if (this._target)
+                this._target.domModel.hideDOMNodeHighlight();
+            this._layerTreeOutline.selectLayer(layer);
+            this._layers3DView.selectObject(activeObject);
+            this._layerDetailsView.setObject(activeObject);
+        } else if (activeObject && activeObject.type() == WebInspector.Layers3DView.ActiveObject.Type.Tile) {
+            if (this._currentlySelectedTile === activeObject)
+                return;
+            this._currentlySelectedTile = activeObject;
+            this._layers3DView.selectObject(activeObject);
+        }
     },
 
     /**
