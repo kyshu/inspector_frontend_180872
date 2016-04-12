@@ -281,8 +281,6 @@ WebInspector.Layers3DView.prototype = {
     {
         var scaleFactorForMargins = 1.2;
         var viewport = this._layerTree.viewportSize();
-        //var baseWidth = viewport ? viewport.contentWidth : this._layerTree.contentRoot().width();
-        //var baseHeight = viewport ? viewport.contentHeight : this._layerTree.contentRoot().height();
         var baseWidth = this._layerTree.contentRoot().width();
         var baseHeight = this._layerTree.contentRoot().height();
         var canvasWidth = this._canvasElement.width;
@@ -460,7 +458,7 @@ WebInspector.Layers3DView.prototype = {
         for (var i = 0; i < scrollRects.length; ++i) {
             var activeObject = WebInspector.Layers3DView.ActiveObject.createScrollRectActiveObject(layer, i);
             var rect = new WebInspector.Layers3DView.Rectangle(activeObject);
-            rect.calculateVerticesFromRectForLayer(layer, scrollRects[i].rect, this._calculateScrollRectDepth(layer, i));
+            rect.calculateVerticesFromRect(layer, scrollRects[i].rect, this._calculateScrollRectDepth(layer, i));
             var isSelected = this._isObjectActive(WebInspector.Layers3DView.OutlineType.Selected, layer, WebInspector.Layers3DView.ActiveObject.Type.Layer, i);
             var hasTexture = (layer.id() in this._layerTexture);
             if (!hasTexture) {
@@ -496,7 +494,7 @@ WebInspector.Layers3DView.prototype = {
             var tile = tiles[i];
             var activeObject = WebInspector.Layers3DView.ActiveObject.createTileActiveObject(tile);
             var rect = new WebInspector.Layers3DView.Rectangle(activeObject);
-            rect.calculateVerticesFromRectForTile({x: tile.rect.x, y: tile.rect.y, width: tile.rect.width, height: tile.rect.height}, this._depthForLayer(layer));
+            rect.calculateVerticesFromRect(layer, {x: tile.rect.x, y: tile.rect.y, width: tile.rect.width, height: tile.rect.height}, this._depthForLayer(layer));
             style = this._styleForTile(tile);
             rect.fillColor = style.fillColor;
             rect.borderColor = style.borderColor;
@@ -989,24 +987,11 @@ WebInspector.Layers3DView.Rectangle.prototype = {
     },
 
     /**
-     * @param {!DOMAgent.Rect} rect
-     * @param {number} z
-     */
-    calculateVerticesFromRectForTile: function(rect, z)
-    {
-        var x1 = rect.x;
-        var y1 = rect.y;
-        var x2 = rect.x + rect.width;
-        var y2 = rect.y + rect.height;
-        this.setVertices([x1, y1, x2, y1, x2, y2, x1, y2], z);
-    },
-
-    /**
      * @param {!WebInspector.Layer} layer
      * @param {!DOMAgent.Rect} rect
      * @param {number} z
      */
-    calculateVerticesFromRectForLayer: function(layer, rect, z)
+    calculateVerticesFromRect: function(layer, rect, z)
     {
         var quad = layer.quad();
         var rx1 = rect.x / layer.width();
