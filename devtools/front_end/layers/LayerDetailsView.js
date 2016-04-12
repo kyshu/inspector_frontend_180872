@@ -36,7 +36,7 @@ WebInspector.LayerDetailsView = function()
 {
     WebInspector.VBox.call(this);
     this.element.classList.add("layer-details-view");
-    this._emptyView = new WebInspector.EmptyView(WebInspector.UIString("Select a layer to see its details"));
+    this._emptyView = new WebInspector.EmptyView(WebInspector.UIString("Select a layer or tile to see its details"));
     this._createTable();
 }
 
@@ -185,7 +185,7 @@ WebInspector.LayerDetailsView.prototype = {
                 this._emptyView.detach();
                 this.element.appendChild(this._tileTableElement);
                 this._idCell.textContent = WebInspector.UIString("%s", this._tile.id);
-                this._tilePositionCell.textContent = WebInspector.UIString("%d,%d", this._tile.rect.x, this._tile.y);
+                this._tilePositionCell.textContent = WebInspector.UIString("%d,%d", this._tile.rect.x, this._tile.rect.y);
                 this._tileSizeCell.textContent = WebInspector.UIString("%d × %d", this._tile.rect.width, this._tile.rect.height);
                 this._rasterModeCell.textContent = WebInspector.UIString("%s", this._tile.rasterMode);
                 this._scaleCell.textContent = WebInspector.UIString("%d", this._tile.scale);
