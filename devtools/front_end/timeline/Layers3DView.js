@@ -281,8 +281,10 @@ WebInspector.Layers3DView.prototype = {
     {
         var scaleFactorForMargins = 1.2;
         var viewport = this._layerTree.viewportSize();
-        var baseWidth = viewport ? viewport.contentWidth : this._layerTree.contentRoot().width();
-        var baseHeight = viewport ? viewport.contentWidth : this._layerTree.contentRoot().height();
+        //var baseWidth = viewport ? viewport.contentWidth : this._layerTree.contentRoot().width();
+        //var baseHeight = viewport ? viewport.contentHeight : this._layerTree.contentRoot().height();
+        var baseWidth = this._layerTree.contentRoot().width();
+        var baseHeight = this._layerTree.contentRoot().height();
         var canvasWidth = this._canvasElement.width;
         var canvasHeight = this._canvasElement.height;
         var scaleX = canvasWidth / baseWidth / scaleFactorForMargins;
