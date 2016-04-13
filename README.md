@@ -20,4 +20,18 @@ Moreover, the tool offers an additional remote targets/webruntime detector.
 2. invoke the tool
   *  `./inspector_ui.py`
 
-THAT'S IT. HAVE FUN AND GOOD LUCK!
+### Demos
+1. Layer snapshot and 3D view
+
+  <a href="https://www.youtube.com/watch?v=9JncPQlEu2I
+" target="_blank"><img src="https://i.ytimg.com/vi/9JncPQlEu2I/default.jpg" 
+alt="Basic demo with layer snapshot" width="240" height="180" border="10" /></a>
+
+2. Show GPU memory distribution on page and tiles detailed info
+
+  <a href="https://www.youtube.com/watch?v=bul6maaSa2M
+" target="_blank"><img src="https://i.ytimg.com/vi/bul6maaSa2M/default.jpg" 
+alt="Tiles and GPU memory distribution" width="240" height="180" border="10" /></a>
+
+
+### THAT'S IT. HAVE FUN AND GOOD LUCK!
