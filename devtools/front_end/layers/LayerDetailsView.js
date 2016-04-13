@@ -188,6 +188,7 @@ WebInspector.LayerDetailsView.prototype = {
                 this._tilePositionCell.textContent = WebInspector.UIString("%d,%d", this._tile.rect.x, this._tile.rect.y);
                 this._tileSizeCell.textContent = WebInspector.UIString("%d × %d", this._tile.rect.width, this._tile.rect.height);
                 this._rasterModeCell.textContent = WebInspector.UIString("%s", this._tile.rasterMode);
+                this._memoryCell.textContent = WebInspector.UIString("%s", this._tile.allocated);
                 this._scaleCell.textContent = WebInspector.UIString("%d", this._tile.scale);
             }
         }
@@ -211,6 +212,7 @@ WebInspector.LayerDetailsView.prototype = {
         this._tilePositionCell = this._createRow(WebInspector.UIString("Position:"), this._ttilebodyElement);
         this._tileSizeCell = this._createRow(WebInspector.UIString("Size:"), this._ttilebodyElement);
         this._rasterModeCell = this._createRow(WebInspector.UIString("Raster mode:"), this._ttilebodyElement);
+        this._memoryCell = this._createRow(WebInspector.UIString("Memory allocated:"), this._ttilebodyElement);
         this._scaleCell = this._createRow(WebInspector.UIString("Scale:"), this._ttilebodyElement);
     },
 

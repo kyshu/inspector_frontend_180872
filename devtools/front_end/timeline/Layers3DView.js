@@ -127,9 +127,11 @@ WebInspector.Layers3DView.ScrollRectBackgroundColor = [178, 0, 0, 0.4];
 WebInspector.Layers3DView.SelectedScrollRectBackgroundColor = [178, 0, 0, 0.6];
 WebInspector.Layers3DView.ScrollRectBorderColor = [178, 0, 0, 1];
 WebInspector.Layers3DView.SelectedTileBorderColor = [255, 255, 0, 1];
-WebInspector.Layers3DView.TileBorderColor = [0, 0, 255, 1];
+WebInspector.Layers3DView.TileBorderColor = [0, 255, 0, 1];
+WebInspector.Layers3DView.TileBorderLightColor = [0, 155, 0, 1];
 WebInspector.Layers3DView.TileWithMemoryAllocated = [0, 63, 0, 0.4];
-WebInspector.Layers3DView.TileWithNoMemoryAllocated = [150, 0, 74, 0.9];
+WebInspector.Layers3DView.TileWithLessMemoryAllocated = [0, 100, 100, 0.2];
+WebInspector.Layers3DView.TileWithNoMemoryAllocated = [0, 0, 0, 0.1];
 WebInspector.Layers3DView.BorderWidth = 1;
 WebInspector.Layers3DView.SelectedBorderWidth = 2;
 
@@ -381,9 +383,12 @@ WebInspector.Layers3DView.prototype = {
      */
     _styleForTile: function(tile)
     {
-        if (tile.allocated)
-            fillColor = WebInspector.Layers3DView.TileWithMemoryAllocated;
-        else
+        if (tile.allocated) {
+            if (tile.rasterMode === "LOW_QUALITY_RASTER_MODE")
+                fillColor = WebInspector.Layers3DView.TileWithLessMemoryAllocated;
+            else if (tile.rasterMode === "HIGH_QUALITY_RASTER_MODE")
+                fillColor = WebInspector.Layers3DView.TileWithMemoryAllocated;
+        } else
             fillColor = WebInspector.Layers3DView.TileWithNoMemoryAllocated;
         if (this._isObjectActive(WebInspector.Layers3DView.OutlineType.Selected, tile, WebInspector.Layers3DView.ActiveObject.Type.Tile)) {
             borderColor = WebInspector.Layers3DView.SelectedTileBorderColor;
